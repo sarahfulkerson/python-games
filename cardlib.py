@@ -1,32 +1,49 @@
-#! /usr/bin/env python
-
-from utillib import bubbleSort
+#! /usr/bin/env python3
+# https://projecteuler.net/problem=54
 
 values = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
 suits = {'C':'Clubs', 'D':'Diamonds', 'H':'Hearts', 'S':'Spades'}
-royalflush = []
-straight = []
 fourofakind =  []
 
-# Royal Flush - possible combos
-for s in sorted(suits.values()):
-    l = []
-    for v in values[-5:]:
-        l.append('%s%s' % (v, s[0]))
-    royalflush.append(l)
+def _setup_():
+    '''
+    Helper function to fill out the top-level list attributes above.
+    '''
 
-# Straight - possible combos
-for s in range(9):
-    l = values[s:s+5]
-    straight.append(l)
+    # Four of a Kind - possible combos
+    for v in values:
+        l = []
+        for s in sorted(suits.keys()):
+            l.append('%s%s' %(v,s))
+        fourofakind.append(l)
 
-# Four of a Kind - possible combos
-for v in values:
-    l = []
-    for s in sorted(suits.keys()):
-        l.append('%s%s' %(v,s))
-    fourofakind.append(l)
-# print(fourofakind)
+def isRoyalFlush(hand):
+    """Returns True if the passed in Hand is a royal flush."""
+    handvalues = sortedCardValues(hand.getValues())
+    royalflushvalues = values[-5:]
+    return handvalues == royalflushvalues and len(hand.getSuits(distinctsuits=True)) == 1
+
+def isStraight(hand):
+    """Returns True if the passed in Hand is a straight."""
+    handvalues = sortedCardValues(hand.getValues())
+    straight = []
+    # Straight - possible combos
+    for s in range(len(values)-len(handvalues)+1):
+        straight = values[s:s+len(handvalues)]
+        if straight == handvalues:
+            return True
+    else:
+        return False
+
+def sortedCardValues(v):
+    """Returns a sorted list of Card values from a passed in list of unsorted values."""
+    vls = v[:]
+    n = len(vls)
+    for i in range(n-1):
+        for j in range(0, n-i-1):
+            if values.index(vls[j]) > values.index(vls[j+1]):
+                vls[j], vls[j+1] = vls[j+1], vls[j]
+    return vls
 
 class Card:
     """
@@ -45,7 +62,7 @@ class Card:
     suitRank
         When True, all relational operators will consider both values and suits in comparisons.
         When False, all relational operators will consider only values in comparisons.
-        Defaults to False.
+        Defaults to False. 'suitRank=True' still needs implementation.
     """
     def __init__(self, value, suit, suitRank=False):
         self.value = str(value).upper()
@@ -147,21 +164,44 @@ class Hand:
         self.hand = [card1, card2, card3, card4, card5]
     def sort(self):
         """
-        Sorts the Hand in place using bubble sort.
+        Sorts the Hand in place in ascending order and return None.
         """
-        sorted_hand = bubbleSort(self.hand)
-        self.card1 = sorted_hand[0]
-        self.card2 = sorted_hand[1]
-        self.card3 = sorted_hand[2]
-        self.card4 = sorted_hand[3]
-        self.card5 = sorted_hand[4]
+        hand = self.hand[:]
+        n = len(hand)
+        for i in range(n-1):
+            for j in range(0, n-i-1):
+                if hand[j] > hand[j+1]:
+                    hand[j], hand[j+1] = hand[j+1], hand[j]
+        self.card1, self.card2, self.card3, self.card4, self.card5 = hand[0], hand[1], hand[2], hand[3], hand[4]
+    def getValues(self):
+        """
+        Returns the values of all Cards in the Hand.
+        """
+        values = []
+        for c in self.hand:
+            values.append(c.getValue())
+        return values
+    def getSuits(self, distinctsuits=False):
+        """
+        Returns the suits of all Cards in the Hand.
+        """
+        s = []
+        if distinctsuits == True:
+            for c in self.hand:
+                if c.getSuit() not in s:
+                    s.append(c.getSuit())
+        else:
+            for c in self.hand:
+                s.append(c.getSuit())
+        return s
     def __getitem__(self, index):
         """Fetches the Card at the given index."""
         return self.hand[index]
+    def __len__(self):
+        """Returns the length of 'self.hand'."""
+        return len(self.hand)
     def __iter__(self):
-        """
-        Returns an instance of iterator class 'hand_iterator'.
-        """
+        """Returns an instance of iterator class 'hand_iterator'."""
         return hand_iterator(self.hand)
     def __repr__(self):
         return '%s(%s, %s, %s, %s, %s)' % (self.__class__.__name__,  repr(self.card1), repr(self.card2), repr(self.card3), repr(self.card4), repr(self.card5))
@@ -188,15 +228,13 @@ class hand_iterator:
 class Deck:
     pass
 
+_setup_()
+
 if __name__ == '__main__':
-    a = Card(2, 'd')
-    b = Card('7', 'd', suitRank=True)
-    c = Card('4', 'C')
-    d = Card('a', 's')
-    e = Card('q', 'd')
+    a = Card('2', 'd')
+    b = Card('3', 'd')
+    c = Card('4', 'd')
+    d = Card('5', 'd')
+    e = Card('6', 'd')
     h = Hand(a, b, c, d, e)
-    print('repr:\n', repr(h))
-    print('suitRank, h[0] = ', h[0].getSuitRank())
-    print('h[0]: ', type(h[0]), ', ', h[0])
-    print('suitRank, h[1] = ', h[1].getSuitRank())
-    print('h[1]: ', type(h[1]), ', ', h[1])
+    print("straight: ", isStraight(h))
