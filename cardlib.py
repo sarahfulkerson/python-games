@@ -2,152 +2,9 @@
 # https://projecteuler.net/problem=54
 
 # TODO: abstract base classes!
-from utillib import values, suits, sortedOnIndex, _valueMethodCustomizer
-
-def countOfValues(hand):
-    carddict = {}
-    res = {}
-    # make a dictionary of suits in the Hand, and make the values of the keys the set of Card values in those suits
-    for card in hand:
-        s = card.getSuit()
-        if carddict.get(s) == None:
-            carddict[s] = {card.getValue()}
-        else:
-            carddict[s].add(card.getValue())
-
-    # count the number of times a particular value appears in the hand
-    for suit in carddict:
-        for value in carddict[suit]:
-            if res.get(value) == None:
-                res[value] = 1
-            else:
-                res[value] += 1
-
-    return res
-
-def isRoyalFlush(hand):
-    """Returns True if the passed in Hand is a royal flush."""
-    handvalues = sortedOnIndex(hand.getValues(), values)
-    royalflushvalues = values[-5:]
-    return handvalues == royalflushvalues and len(hand.getSuits(distinctsuits=True)) == 1
-
-def isStraightFlush(hand):
-    """
-    Returns a list with 2 values. The first value in the list will 
-    be True if the passed in Hand is a straight flush and false if 
-    it is not. The second value in the list will be the value of 
-    the high card in the straight flush, or None if the Hand is 
-    not a straight flush.
-    """
-    # royal flush trumps straight flush
-    if isRoyalFlush(hand) == True:
-        return [False, None]
-
-    handvalues = sortedOnIndex(hand.getValues(), values)
-    handsuits = hand.getSuits(distinctsuits=True)
-    straightflush = []
-
-    # flush logic - there should only be 1 suit in the hand
-    if len(handsuits) == 1:
-        straightflush = [True, handvalues[-1]]  # straightflush only gets returned if the hand is also a straight
-    else:
-        return [False, None]
-
-    # straight logic - break out of the loop if a straight is found and return straightflush
-    for s in range(len(values)-len(handvalues)+1):
-        st = values[s:s+len(handvalues)]
-        if st == handvalues:
-            return straightflush    # the hand is indeed both a straight and a flush so return straightflush
-    else:   # if the loop completes then a straight was not found so return [False, None]
-        return [False, None]
-
-def isFourOfAKind(hand):
-    """
-    Returns a list with 2 values. The first value in the list will 
-    be True if the passed in Hand is four of a kind and false if 
-    it is not. The second value in the list will be the value of
-    the four of a kind, or None if the Hand is not four of a kind.
-    """
-    fourofakind = countOfValues(hand)
-    return _valueMethodCustomizer(fourofakind,'!=', 2, 4)
-
-def isFullHouse(hand):
-    """
-    Returns a list with 2 values. The first value in the list will 
-    be True if the passed in Hand is a full house and false if it 
-    is not. The second value in the list will be the value of the 
-    three of a kind in the full house, or None if the Hand is not 
-    a full house.
-    """
-    fullhouse = countOfValues(hand)
-    return _valueMethodCustomizer(fullhouse, '!=', 2, 3)
-
-def isFlush(hand):
-    """
-    Returns a list with 2 values. The first value in the list will 
-    be True if the passed in Hand is a flush and false if it is 
-    not. The second value in the list will be the value of the 
-    high card in the flush, or None if the Hand is not a flush.
-    """
-    # royal flush and straight flush trumps flush
-    if isRoyalFlush(hand) == True or isStraightFlush(hand)[0] == True:
-        return [False, None]
-
-    handvalues = sortedOnIndex(hand.getValues(), values)
-    handsuits = hand.getSuits(distinctsuits=True)
-    if len(handsuits) == 1:
-        return [True, handvalues[-1]]
-    else:
-        return [False, None]
-
-def isStraight(hand):
-    """
-    Returns a list with 2 values. The first value in the list will 
-    be True if the passed in Hand is a straight and false if it is
-    not. The second value in the list will be the high card in the
-    straight, or None if the Hand is not a straight.
-    """
-    # royal flush and straight flush trumps straight
-    if isRoyalFlush(hand) == True or isStraightFlush(hand)[0] == True:
-        return [False, None]
-
-    handvalues = sortedOnIndex(hand.getValues(), values)
-    straight = []
-    # take a slice of the list the same length as the Hand and see if the values match
-    for s in range(len(values)-len(handvalues)+1):
-        straight = values[s:s+len(handvalues)]
-        if straight == handvalues:
-            return [True, straight[-1]]
-    else:
-        return [False, None]
-
-def isThreeOfAKind(hand):
-    """
-    Returns a list with 2 values. The first value in the list will 
-    be True if the passed in Hand is three of a kind and false if 
-    it is not. The second value in the list will be the value of
-    the three of a kind, or None if the Hand is not three of a kind.
-    """
-    # full house trumps three of a kind, so if the hand is a full house then this function should not continue to run
-    if isFullHouse(hand)[0] == True:
-        return [False, None]
-
-    threeofakind = countOfValues(hand)
-    return _valueMethodCustomizer(threeofakind, '<', 3, 3)
-
-def isTwoPairs(hand):
-    """
-    Returns a list with 2 values. The first value in the list will 
-    be True if the passed in Hand is two pairs and false if it is 
-    not. The second value in the list will be a list containing the 
-    values of the two pairs, or None if the Hand is not two pairs.
-    """
-    # flush trumps two pairs, so if the hand is a flush then this function should not continue to run
-    if isFlush(hand)[0] == True:
-        return [False, None]
-    
-    twopairs = countOfValues(hand)
-    return _valueMethodCustomizer(twopairs, '!=', 3, 2, appendon=True)
+from collections.abc import MutableSequence
+from pokerlib import countOfValues, isHighCard, isOnePair, isTwoPairs, isThreeOfAKind, isStraight, isFlush, isFullHouse, isFourOfAKind, isStraightFlush, isRoyalFlush, handrankfuncs
+from utillib import values, suits, sortedOnIndex
 
 class Card:
     """
@@ -305,9 +162,27 @@ class Hand:
             for c in self.hand:
                 s.append(c.getSuit())
         return s
-    def __getitem__(self, index):
+    def getHighCard(self):
+        handvalues = sortedOnIndex(self.getValues(), values)
+        return handvalues[-1]
+    def __getitem__(self, key):
         """Fetches the Card at the given index."""
-        return self.hand[index]
+        return self.hand[key]
+    def __setitem__(self, key, value):
+        #TODO
+        pass
+    def __delitem__(self, key):
+        #TODO
+        pass
+    def __contains__(self, key):
+        #
+        pass
+    def __add__(self, value):
+        #TODO
+        pass
+    def __iadd__(self, value):
+        #TODO
+        pass
     def __len__(self):
         """Returns the length of 'self.hand'."""
         return len(self.hand)
@@ -337,17 +212,17 @@ class hand_iterator:
         return n
 
 class Deck:
+    # [Card(x,y) for x in suits for y in values]
     pass
 
 if __name__ == '__main__':
-    a = Card('6', 's')
-    b = Card('6', 'd')
-    c = Card('6', 'c')
-    d = Card('8', 'd')
-    e = Card('8', 'c')
+    a = Card('a', 'd')
+    b = Card('k', 'd')
+    c = Card('q', 'd')
+    d = Card('j', 'd')
+    e = Card('t', 'd')
     h = Hand(a, b, c, d, e)
-    l = [isRoyalFlush, isStraightFlush, isFourOfAKind, isFullHouse, isFlush, isStraight, isThreeOfAKind, isTwoPairs]
     print('%s : %s' % ('~~~Hand type'.ljust(15, '~'), '~~~Result'.ljust(13, '~')))
-    for func in l:
+    for func in handrankfuncs:
         print("%s : %s" % (func.__name__.ljust(15), func(h)))
-    #print(isTwoPairs(h))
+    print(h.getHighCard())

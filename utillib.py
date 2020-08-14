@@ -31,7 +31,7 @@ def _valueMethodCustomizer(dic, oper, desiredlen, desiredcount, *, appendon=Fals
     evalbuilder = 'len(%s) %s %s' % (dic, oper, desiredlen) # builds the string for the eval
 
     if eval(evalbuilder):       # gets the length of the passed in countOfValues dict and compares it using the passe din operator to the desired values dict length
-        return [False, None]    # return if the hand cannot be the desired rank due to the incorrect number of values in the hand
+        return False    # return if the hand cannot be the desired rank due to the incorrect number of values in the hand
 
     vals = list(dic.items())    # make a list of the countOfValues items    
     
@@ -49,7 +49,7 @@ def _valueMethodCustomizer(dic, oper, desiredlen, desiredcount, *, appendon=Fals
         l = sortedOnIndex(res, values)
         return [True, l]
     else:
-        return [False, None]
+        return False
     
 if __name__ == '__main__':
     pass
