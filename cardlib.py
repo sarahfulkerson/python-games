@@ -1,49 +1,8 @@
 #! /usr/bin/env python3
 # https://projecteuler.net/problem=54
 
-values = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
-suits = {'C':'Clubs', 'D':'Diamonds', 'H':'Hearts', 'S':'Spades'}
-fourofakind =  []
-
-def _setup_():
-    '''
-    Helper function to fill out the top-level list attributes above.
-    '''
-
-    # Four of a Kind - possible combos
-    for v in values:
-        l = []
-        for s in sorted(suits.keys()):
-            l.append('%s%s' %(v,s))
-        fourofakind.append(l)
-
-def isRoyalFlush(hand):
-    """Returns True if the passed in Hand is a royal flush."""
-    handvalues = sortedCardValues(hand.getValues())
-    royalflushvalues = values[-5:]
-    return handvalues == royalflushvalues and len(hand.getSuits(distinctsuits=True)) == 1
-
-def isStraight(hand):
-    """Returns True if the passed in Hand is a straight."""
-    handvalues = sortedCardValues(hand.getValues())
-    straight = []
-    # Straight - possible combos
-    for s in range(len(values)-len(handvalues)+1):
-        straight = values[s:s+len(handvalues)]
-        if straight == handvalues:
-            return True
-    else:
-        return False
-
-def sortedCardValues(v):
-    """Returns a sorted list of Card values from a passed in list of unsorted values."""
-    vls = v[:]
-    n = len(vls)
-    for i in range(n-1):
-        for j in range(0, n-i-1):
-            if values.index(vls[j]) > values.index(vls[j+1]):
-                vls[j], vls[j+1] = vls[j+1], vls[j]
-    return vls
+from pokerlib import countOfValues, isHighCard, isOnePair, isTwoPairs, isThreeOfAKind, isStraight, isFlush, isFullHouse, isFourOfAKind, isStraightFlush, isRoyalFlush, handrankfuncs
+from utillib import values, suits, sortedOnIndex
 
 class Card:
     """
@@ -142,99 +101,79 @@ class Card:
     def __str__(self):
         return "%s: value = '%s', suit = '%s'" % (self.__class__.__name__, self.value, suits.get(self.suit))
 
-class Hand:
+class Hand(list):
     """
-    This class takes 5 instances of class Card as arguments.
-
-    Attributes:
-    -- card1 (instance of class Card)
-    -- card2 (instance of class Card)
-    -- card3 (instance of class Card)
-    -- card4 (instance of class Card)
-    -- card5 (instance of class Card)
-    -- hand (list of 5 Card instances above)
-    -- sort (method for sorting Hand in place)
+    This class extends the 'list' built-in type and adds methods for processing
+    instances of class Card.
     """
-    def __init__(self, card1, card2, card3, card4, card5):
-        self.card1 = card1
-        self.card2 = card2
-        self.card3 = card3
-        self.card4 = card4
-        self.card5 = card5
-        self.hand = [card1, card2, card3, card4, card5]
-    def sort(self):
-        """
-        Sorts the Hand in place in ascending order and return None.
-        """
-        hand = self.hand[:]
-        n = len(hand)
-        for i in range(n-1):
-            for j in range(0, n-i-1):
-                if hand[j] > hand[j+1]:
-                    hand[j], hand[j+1] = hand[j+1], hand[j]
-        self.card1, self.card2, self.card3, self.card4, self.card5 = hand[0], hand[1], hand[2], hand[3], hand[4]
-    def getValues(self):
+    def __init__(self, *pargs):
+        list.__init__([])
+        self.extend([*pargs])
+    def getValues(self, *, distinctvalues=False):
         """
         Returns the values of all Cards in the Hand.
         """
-        values = []
-        for c in self.hand:
-            values.append(c.getValue())
-        return values
-    def getSuits(self, distinctsuits=False):
+        v = []
+        if distinctvalues == True:
+            for c in self:
+                val = c.getValue()
+                if val not in v:
+                    v.append(val)
+        else:
+            for c in self:
+                v.append(c.getValue())
+        return v
+    def getSuits(self, *, distinctsuits=False):
         """
         Returns the suits of all Cards in the Hand.
         """
         s = []
         if distinctsuits == True:
-            for c in self.hand:
-                if c.getSuit() not in s:
-                    s.append(c.getSuit())
+            for c in self:
+                val = c.getSuit()
+                if val not in s:
+                    s.append(val)
         else:
-            for c in self.hand:
+            for c in self:
                 s.append(c.getSuit())
         return s
-    def __getitem__(self, index):
-        """Fetches the Card at the given index."""
-        return self.hand[index]
-    def __len__(self):
-        """Returns the length of 'self.hand'."""
-        return len(self.hand)
-    def __iter__(self):
-        """Returns an instance of iterator class 'hand_iterator'."""
-        return hand_iterator(self.hand)
-    def __repr__(self):
-        return '%s(%s, %s, %s, %s, %s)' % (self.__class__.__name__,  repr(self.card1), repr(self.card2), repr(self.card3), repr(self.card4), repr(self.card5))
+    def getHighCard(self):
+        handvalues = sortedOnIndex(self.getValues(), values)
+        return handvalues[-1]
     def __str__(self):
-        return '%s:\ncard1 = [%s],\ncard2 = [%s],\ncard3 = [%s],\ncard4 = [%s],\ncard5 = [%s]' % (self.__class__.__name__,self.card1, self.card2, self.card3, self.card4, self.card5)
+        result = "%s:\n" % self.__class__.__name__
+        pos = 1
+        for c in self:
+            result = '%s%s\t%s\n' % (result, pos, str(c))
+            pos += 1
 
-class hand_iterator:
-    """
-    Iterator returned for the Hand iterable class.
-    """
-    def __init__(self, hand):
-        self.hand = hand
-        self.counter = 0
-    def __next__(self):
-        """
-        Returns the next Card in the Hand until the Hand is empty.
-        """
-        if self.counter == len(self.hand):
-            raise StopIteration
-        n = self.hand[self.counter]
-        self.counter += 1
-        return n
+        return result
+    def __repr__(self):
+        result = self.__class__.__name__
+        tup = tuple()
+
+        for c in self:
+             tup += (c,)
+        
+        if len(tup) == 1:
+            result = result + repr(tup)[:-2] + ')'
+        else:
+            result = result + repr(tup)
+        
+        return result
 
 class Deck:
+    # [Card(x,y) for x in suits for y in values]
     pass
 
-_setup_()
-
 if __name__ == '__main__':
-    a = Card('2', 'd')
-    b = Card('3', 'd')
-    c = Card('4', 'd')
-    d = Card('5', 'd')
-    e = Card('6', 'd')
-    h = Hand(a, b, c, d, e)
-    print("straight: ", isStraight(h))
+    a = Card('a', 'd')
+    b = Card('k', 'd')
+    c = Card('q', 'd')
+    d = Card('j', 'd')
+    e = Card('t', 'd')
+    h = Hand(a,b,c,d,e)
+    print('%s : %s' % ('~~~Hand type'.ljust(15, '~'), '~~~Result'.ljust(13, '~')))
+    for func in handrankfuncs:
+        print("%s : %s" % (func.__name__.ljust(15), func(h)))
+    
