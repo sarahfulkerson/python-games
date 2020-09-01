@@ -161,16 +161,21 @@ def isHighCard(hand):
 
 handrankfuncs = [isHighCard, isOnePair, isTwoPairs, isThreeOfAKind, isStraight, isFlush, isFullHouse, isFourOfAKind, isStraightFlush, isRoyalFlush]
 
-def getHandRank(hand):
+def getHandRankName(hand):
     for rank in handrankfuncs:
         if rank(hand) != False:
             return rank.__name__
     return None
-    
+
+def getHandRankFunc(hand):
+    for rank in handrankfuncs:
+        if rank(hand) != False:
+            return rank
+    return None
 
 if __name__ == '__main__':
     from cardlib import Card, Hand
     hand1 = Hand(Card('a', 'd'), Card('k', 'd'), Card('q', 'd'), Card('j', 'd'), Card('t', 'd'))
     hand2 = Hand(Card('a', 'c'), Card('k', 'd'), Card('q', 'c'), Card('j', 'c'), Card('2', 'c'))
-    print("hand1: %s" % getHandRank(hand1))
-    print("hand2: %s" % getHandRank(hand2))
+    print("hand1: %s" % getHandRankName(hand1))
+    print("hand2: %s" % getHandRankName(hand2))

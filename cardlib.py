@@ -141,9 +141,13 @@ class Hand(list):
             for c in self:
                 s.append(c.getSuit())
         return s
-    def getHighCard(self):
+    def getHighCard(self, pos=-1):
+        """
+        Returns the high card in the hand. Optional argument 'pos' defaults to the last
+        item in the hand, but can be changed with a passed in parg.
+        """
         hand = sorted(self)
-        return hand[-1]
+        return hand[pos]
     def __str__(self):
         result = "%s:\n" % self.__class__.__name__
         pos = 1
