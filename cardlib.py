@@ -47,7 +47,6 @@ class Card:
             else:
                 pass
         return False
-
     def __ne__(self, other):
         """
         self != other
