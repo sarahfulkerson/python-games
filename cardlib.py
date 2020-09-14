@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 # https://projecteuler.net/problem=54
 
+from __future__ import print_function
 from utillib import values, suits
 
 class Card:
@@ -112,6 +113,7 @@ class Hand(list):
     def __init__(self, *pargs):
         list.__init__([])
         self.extend([*pargs])
+        self.sort()
     def getValues(self, *, distinctvalues=False):
         """
         Returns the values of all Cards in the Hand.

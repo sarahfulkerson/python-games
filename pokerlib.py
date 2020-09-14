@@ -1,61 +1,59 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 """
 https://projecteuler.net/problem=54
 
 Library of functions to enable comparing poker hands.
 """
 
-from utillib import values, sortedOnIndex, _valueMethodCustomizer
+from __future__ import print_function
+from collections import Counter
+from utillib import values, sortedOnIndex, sortMultipleLists, _valueMethodCustomizer
 
 def countOfValues(hand):
-    carddict = {}
-    res = {}
-    # make a dictionary of suits in the Hand, and make the values of the keys the set of Card values in those suits
-    for card in hand:
-        s = card.getSuit()
-        if carddict.get(s) == None:
-            carddict[s] = {card.getValue()}
-        else:
-            carddict[s].add(card.getValue())
+    vals = hand.getValues(distinctvalues=True)
+    counts = []
 
-    # count the number of times a particular value appears in the hand
-    for suit in carddict:
-        for value in carddict[suit]:
-            if res.get(value) == None:
-                res[value] = 1
-            else:
-                res[value] += 1
-
-    return res
+    for val in vals:
+        i = 0
+        for card in hand:
+            if card.getValue() == val: i += 1
+        counts.append(i)
+    sortMultipleLists(counts,vals)
+    counts.reverse(); vals.reverse()
+    return counts, vals
 
 def isRoyalFlush(hand):
     """Returns True if the passed in Hand is a royal flush."""
     handvalues = sortedOnIndex(hand.getValues(), values)
     royalflushvalues = values[-5:]
-    return handvalues == royalflushvalues and len(hand.getSuits(distinctsuits=True)) == 1
+    res = handvalues == royalflushvalues and len(hand.getSuits(distinctsuits=True)) == 1
+    if res == True:
+        return res, hand.getHighCard()
+    else:
+        return res, None
 
 def isStraightFlush(hand):
     """
     Returns True if the passed in Hand is a straight flush and False if it is not.
     """
     # royal flush trumps straight flush
-    if isRoyalFlush(hand) == True:
-        return False
+    if isRoyalFlush(hand) != False:
+        return False, None
 
     handvalues = sortedOnIndex(hand.getValues(), values)
     handsuits = hand.getSuits(distinctsuits=True)
 
     # flush logic - there should only be 1 suit in the hand
     if len(handsuits) != 1:
-        return False            # the straight flush should have only 1 suit in the hand
+        return False, None            # the straight flush should have only 1 suit in the hand
 
     # straight logic - break out of the loop if a straight is found and return straightflush
     for s in range(len(values)-len(handvalues)+1):
         st = values[s:s+len(handvalues)]
         if st == handvalues:
-            return True    # the hand is indeed both a straight and a flush so return True
+            return True, hand.getHighCard()    # the hand is indeed both a straight and a flush so return True
     
-    return False # if the loop completes without returning then a straight was not found so return False
+    return False, None # if the loop completes without returning then a straight was not found so return False
 
 def isFourOfAKind(hand):
     """
@@ -83,32 +81,28 @@ def isFlush(hand):
     Returns True if the passed in Hand is a flush and false if it is not.
     """
     # royal flush and straight flush trumps flush
-    if isRoyalFlush(hand) == True or isStraightFlush(hand) == True:
-        return False
+    if isRoyalFlush(hand) != False or isStraightFlush(hand) != False:
+        return False, None
 
     handsuits = hand.getSuits(distinctsuits=True)
     if len(handsuits) == 1:
-        return True
+        return True, hand.getHighCard()
     
-    return False
+    return False, None
 
 def isStraight(hand):
     """
     Returns True if the passed in Hand is a straight and false if it is not.
     """
-    # royal flush and straight flush trumps straight
-    if isRoyalFlush(hand) == True or isStraightFlush(hand) == True:
-        return False
-
     handvalues = sortedOnIndex(hand.getValues(), values)
     straight = []
     # take a slice of the list the same length as the Hand and see if the values match
     for s in range(len(values)-len(handvalues)+1):
         straight = values[s:s+len(handvalues)]
         if straight == handvalues:
-            return True
+            return True, handvalues[-1]
     
-    return False
+    return False, None
 
 def isThreeOfAKind(hand):
     """
@@ -117,12 +111,10 @@ def isThreeOfAKind(hand):
     it is not. The second value in the list will be the value of
     the three of a kind, or None if the Hand is not three of a kind.
     """
-    # full house trumps three of a kind, so if the hand is a full house then this function should not continue to run
-    if type(isFullHouse(hand)) == list:
-        return False
-
-    threeofakind = countOfValues(hand)
-    return _valueMethodCustomizer(threeofakind, '<', 3, 3)
+    counts, vals = countOfValues(hand)
+    if len(counts) == 3 and counts[0] == 3:
+        return True, vals[:1]
+    return False, None
 
 def isTwoPairs(hand):
     """
@@ -131,9 +123,10 @@ def isTwoPairs(hand):
     not. The second value in the list will be a list containing the 
     values of the two pairs, or None if the Hand is not two pairs.
     """
-    
-    twopairs = countOfValues(hand)
-    return _valueMethodCustomizer(twopairs, '!=', 3, 2, appendon=True)
+    counts, vals = countOfValues(hand)
+    if len(counts) == 3 and counts[0] != 3:
+        return True, vals[:2]
+    return False, None
 
 def isOnePair(hand):
     """
@@ -142,24 +135,22 @@ def isOnePair(hand):
     The second value in the list will be a list containing the value
     of the pair, or None if the Hand is not a  pair.
     """
-    # two pairs and full house trumps one pair, so if the hand is not one pair then this function should not continue to run
-    if type(isTwoPairs(hand)) == list or type(isFullHouse(hand)) == list:
-        return False
-    
-    onepair = countOfValues(hand)
-    return _valueMethodCustomizer(onepair, '<', 2, 2)
+    counts, vals = countOfValues(hand)
+    if len(counts) == 4:
+        return True, vals[:1]
+    return False, None
 
 def isHighCard(hand):
     """
     Returns True if the passed in Hand is a high card only hand and False if it is not.
     """
-    # everything else trumps this hand
-    if isRoyalFlush(hand) == True or isStraightFlush(hand) == True or type(isFourOfAKind(hand)) == list or type(isFullHouse(hand)) == list or isFlush(hand) == True or isStraight(hand) == True or type(isThreeOfAKind(hand)) == list or type(isTwoPairs(hand)) == list or type(isTwoPairs(hand)) == list or type(isOnePair(hand)) == list:
-        return False
-    
-    return True
+    if isStraight(hand) != (False, None): return False, None
+    counts, vals = countOfValues(hand)
+    if len(counts) == 5 and len(hand.getSuits(distinctsuits=True)) != 1:
+        return True, vals[:1]
+    return False, None
 
-handrankfuncs = [isHighCard, isOnePair, isTwoPairs, isThreeOfAKind, isStraight, isFlush, isFullHouse, isFourOfAKind, isStraightFlush, isRoyalFlush]
+handrankfuncs = [isRoyalFlush, isStraightFlush, isFourOfAKind, isFullHouse, isFlush, isStraight, isThreeOfAKind, isTwoPairs, isOnePair, isHighCard]
 
 def getHandRankName(hand):
     for rank in handrankfuncs:
@@ -169,13 +160,17 @@ def getHandRankName(hand):
 
 def getHandRankFunc(hand):
     for rank in handrankfuncs:
-        if rank(hand) != False:
-            return rank
+        res, val = rank(hand)
+        print(rank.__name__, res, val)
+        #if rank(hand) != False:
+        #    return rank
     return None
 
 if __name__ == '__main__':
     from cardlib import Card, Hand
-    hand1 = Hand(Card('a', 'd'), Card('k', 'd'), Card('q', 'd'), Card('j', 'd'), Card('t', 'd'))
-    hand2 = Hand(Card('a', 'c'), Card('k', 'd'), Card('q', 'c'), Card('j', 'c'), Card('2', 'c'))
-    print("hand1: %s" % getHandRankName(hand1))
-    print("hand2: %s" % getHandRankName(hand2))
+    s = '5H KS 9C 7D 9H 8D 3S 5D 5C AH'
+    hand1 = Hand(Card('5', 'h'), Card('6', 's'), Card('7', 'c'), Card('8', 'd'), Card('9', 'h'))
+    hand2 = Hand(Card('8', 'd'), Card('3', 's'), Card('5', 'd'), Card('5', 'c'), Card('a', 'h'))
+    hand3 = Hand(Card('8', 'd'), Card('3', 's'), Card('5', 'd'), Card('4', 'c'), Card('a', 'h'))
+    for rank in handrankfuncs[5:]:
+        print(rank.__name__, rank(hand1))

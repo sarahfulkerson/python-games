@@ -16,6 +16,22 @@ def sortedOnIndex(val, ind):
                 vls[j], vls[j+1] = vls[j+1], vls[j]
     return vls
 
+def sortMultipleLists(list1, list2, *pargs):
+    """
+    Uses bubble sort to sort multiple lists in place based on the sort
+    results of list1. If all lists are not the same length as list1, an
+    exception will be thrown.
+    """
+    others = list(*pargs)
+    for i in range(len(list1)-1):
+        for j in range(0, len(list1)-i-1):
+            if list1[j] > list1[j+1]:
+                list1[j], list1[j+1] = list1[j+1], list1[j]
+                list2[j], list2[j+1] = list2[j+1], list2[j]
+                if others:
+                    for listn in others:
+                        listn[j], listn[j+1] = listn[j+1], listn[j]
+
 def _valueMethodCustomizer(dic, oper, desiredlen, desiredcount, *, appendon=False):
     """
     dic = the passed in result of countOfValues()
@@ -31,7 +47,7 @@ def _valueMethodCustomizer(dic, oper, desiredlen, desiredcount, *, appendon=Fals
     evalbuilder = 'len(%s) %s %s' % (dic, oper, desiredlen) # builds the string for the eval
 
     if eval(evalbuilder):       # gets the length of the passed in countOfValues dict and compares it using the passe din operator to the desired values dict length
-        return False    # return if the hand cannot be the desired rank due to the incorrect number of values in the hand
+        return False, None    # return if the hand cannot be the desired rank due to the incorrect number of values in the hand
 
     vals = list(dic.items())    # make a list of the countOfValues items    
     
@@ -42,14 +58,14 @@ def _valueMethodCustomizer(dic, oper, desiredlen, desiredcount, *, appendon=Fals
             else:                       # else appendon == True...
                 res.append(x[0])            # so append the value to res
 
-
     if appendon == False and len(res) == 1:
-        return [True, res]
+        return True, res
     elif appendon == True and len(res) != 0:
         l = sortedOnIndex(res, values)
-        return [True, l]
+        l.reverse()
+        return True, l
     else:
-        return False
+        return False, None
     
 if __name__ == '__main__':
     pass
