@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
 # https://projecteuler.net/problem=54
 
-from pokerlib import countOfValues, isHighCard, isOnePair, isTwoPairs, isThreeOfAKind, isStraight, isFlush, isFullHouse, isFourOfAKind, isStraightFlush, isRoyalFlush, handrankfuncs
-from utillib import values, suits, sortedOnIndex
+from __future__ import print_function
+from utillib import values, suits
 
 class Card:
     """
@@ -42,20 +42,24 @@ class Card:
         
         Returns true if the Cards are equal.
         """
-        if self.suitRank == False:
-            return values.index(self.value) == values.index(other.value)
-        else:
-            pass
+        if isinstance(other, Card):
+            if self.suitRank == False:
+                return values.index(self.value) == values.index(other.value)
+            else:
+                pass
+        return False
     def __ne__(self, other):
         """
         self != other
         
         Returns true if the Cards are not equal.
         """
-        if self.suitRank == False:
-            return values.index(self.value) != values.index(other.value)
-        else:
-            pass
+        if isinstance(other, Card):
+            if self.suitRank == False:
+                return values.index(self.value) != values.index(other.value)
+            else:
+                pass
+        return False
     def __gt__(self, other):
         """
         self > other
@@ -109,6 +113,7 @@ class Hand(list):
     def __init__(self, *pargs):
         list.__init__([])
         self.extend([*pargs])
+        self.sort()
     def getValues(self, *, distinctvalues=False):
         """
         Returns the values of all Cards in the Hand.
@@ -137,9 +142,13 @@ class Hand(list):
             for c in self:
                 s.append(c.getSuit())
         return s
-    def getHighCard(self):
-        handvalues = sortedOnIndex(self.getValues(), values)
-        return handvalues[-1]
+    def getHighCard(self, pos=-1):
+        """
+        Returns the high card in the hand. Optional argument 'pos' defaults to the last
+        item in the hand, but can be changed with a passed in parg.
+        """
+        hand = sorted(self)
+        return hand[pos]
     def __str__(self):
         result = "%s:\n" % self.__class__.__name__
         pos = 1
@@ -167,6 +176,7 @@ class Deck:
     pass
 
 if __name__ == '__main__':
+    from pokerlib import handrankfuncs
     a = Card('a', 'd')
     b = Card('k', 'd')
     c = Card('q', 'd')
@@ -176,4 +186,5 @@ if __name__ == '__main__':
     print('%s : %s' % ('~~~Hand type'.ljust(15, '~'), '~~~Result'.ljust(13, '~')))
     for func in handrankfuncs:
         print("%s : %s" % (func.__name__.ljust(15), func(h)))
+    print('High card: %s' % h.getHighCard())
     
