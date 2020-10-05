@@ -15,7 +15,6 @@ def sortedOnIndex(val, ind):
             if ind.index(vls[j]) > ind.index(vls[j+1]):
                 vls[j], vls[j+1] = vls[j+1], vls[j]
     return vls
-
 def sortMultipleLists(list1, list2, *pargs):
     """
     Uses bubble sort to sort multiple lists in place based on the sort
@@ -30,43 +29,7 @@ def sortMultipleLists(list1, list2, *pargs):
                 list2[j], list2[j+1] = list2[j+1], list2[j]
                 if others:
                     for listn in others:
-                        listn[j], listn[j+1] = listn[j+1], listn[j]
-
-def _valueMethodCustomizer(dic, oper, desiredlen, desiredcount, *, appendon=False):
-    """
-    dic = the passed in result of countOfValues()
-    oper = the desired operator to use to compare dic to the value of desiredlen
-    desiredlen = the length to use when comparing the length of dic with the operator passed in to oper
-    desiredcount = the desired number of times a value should show up in the hand
-    appendon = whether or not to append multiple values that match the desiredcount to the result set; defaults to False
-    """
-    if appendon == False:   # if appendon == False then res is a string
-        res = ''
-    else:                   # else res is a list
-        res = []
-    evalbuilder = 'len(%s) %s %s' % (dic, oper, desiredlen) # builds the string for the eval
-
-    if eval(evalbuilder):       # gets the length of the passed in countOfValues dict and compares it using the passe din operator to the desired values dict length
-        return False, None    # return if the hand cannot be the desired rank due to the incorrect number of values in the hand
-
-    vals = list(dic.items())    # make a list of the countOfValues items    
-    
-    for x in vals:                  # for each key/value pair in the 'vals' list...
-        if x[1] == desiredcount:    # if the count of that value equals the desired count...
-            if appendon == False:       # and if appendon == False...
-                res = x[0]                  # set 'res' equal to that value
-            else:                       # else appendon == True...
-                res.append(x[0])            # so append the value to res
-
-    if appendon == False and len(res) == 1:
-        return True, res
-    elif appendon == True and len(res) != 0:
-        l = sortedOnIndex(res, values)
-        l.reverse()
-        return True, l
-    else:
-        return False, None
-    
+                        listn[j], listn[j+1] = listn[j+1], listn[j]    
 if __name__ == '__main__':
     pass
     # test = [64, 34, 25, 12, 22, 11, 90]
