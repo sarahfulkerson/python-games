@@ -104,7 +104,6 @@ class Card:
         return "%s('%s', '%s')" % (self.__class__.__name__, self.value, self.suit)
     def __str__(self):
         return "%s: value = '%s', suit = '%s'" % (self.__class__.__name__, self.value, suits.get(self.suit))
-
 class Hand(list):
     """
     This class extends the 'list' built-in type and adds methods for processing
@@ -170,11 +169,9 @@ class Hand(list):
             result = result + repr(tup)
         
         return result
-
 class Deck:
     # [Card(x,y) for x in suits for y in values]
     pass
-
 if __name__ == '__main__':
     from pokerlib import handrankfuncs
     a = Card('a', 'd')
